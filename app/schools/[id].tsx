@@ -1,51 +1,90 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Box, VStack, Heading, Text, FlatList, Button, ButtonText, HStack, Icon, ArrowLeftIcon, TrashIcon, EditIcon, AddIcon, Pressable } from '@gluestack-ui/themed';
+import {
+  Box, VStack, Heading, Text, FlatList, Button, ButtonText,
+  HStack, Icon, ArrowLeftIcon, TrashIcon, EditIcon, AddIcon,
+  Pressable, Input, InputField, CheckIcon, CloseIcon
+} from '@gluestack-ui/themed';
 import { useSchoolStore } from '../../src/features/schools/store/useSchoolStore';
-import { Alert } from 'react-native';
 
 export default function SchoolDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { schools, classes, deleteSchool, deleteClass } = useSchoolStore() as any;
+  const { schools, classes, deleteSchool, deleteClass, updateSchool } = useSchoolStore();
 
-  const school = schools.find((s: any) => s.id === id);
-  const schoolClasses = classes.filter((c: any) => c.schoolId === id);
+  const school = schools.find((s) => s.id === id);
+  const schoolClasses = classes.filter((c) => c.schoolId === id);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempName, setTempName] = useState(school?.name || '');
 
   if (!school) return null;
 
+  const handleSaveName = () => {
+    updateSchool(school.id, { name: tempName });
+    setIsEditing(false);
+  };
+
   return (
     <Box style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 16 }}>
-      <Stack.Screen options={{ title: school.name }} />
-      <VStack style={{ marginTop: 20 }}>
-        <HStack style={{ justifyContent: 'space-between', marginBottom: 20 }}>
-          <Pressable onPress={() => router.replace('/')}><Icon as={ArrowLeftIcon} color="$white" /></Pressable>
-          <HStack space="md">
-            <Button size="sm" onPress={() => router.push(`/schools/manage?id=${id}`)} style={{ backgroundColor: '#262626' }}><Icon as={EditIcon} color="$white" /></Button>
-            <Button size="sm" onPress={() => { deleteSchool(id); router.replace('/'); }} style={{ backgroundColor: '#450a0a' }}><Icon as={TrashIcon} color="$red500" /></Button>
-          </HStack>
+      <Stack.Screen options={{ title: "Detalhes da Escola" }} />
+
+      <VStack space="xl" style={{ marginTop: 20 }}>
+        {/* Header de Navegação e Exclusão */}
+        <HStack justifyContent="space-between" alignItems="center">
+          <Pressable onPress={() => router.replace('/')}>
+            <Icon as={ArrowLeftIcon} color="$white" size="xl" />
+          </Pressable>
+          <Button size="sm" action="negative" onPress={() => { deleteSchool(school.id); router.replace('/'); }}>
+            <Icon as={TrashIcon} color="$white" />
+          </Button>
         </HStack>
 
-        <Heading color="$white" size="xl">{school.name}</Heading>
-        <Text color="$textDark400" mb="$8">{school.address}</Text>
+        {/* Edição do Nome da Escola */}
+        {isEditing ? (
+          <HStack space="sm" alignItems="center">
+            <Input style={{ flex: 1, backgroundColor: '#171717', borderColor: '#0077e6' }}>
+              <InputField color="$white" value={tempName} onChangeText={setTempName} autoFocus />
+            </Input>
+            <Pressable onPress={handleSaveName}><Icon as={CheckIcon} color="$success500" size="xl" /></Pressable>
+            <Pressable onPress={() => setIsEditing(false)}><Icon as={CloseIcon} color="$error500" size="xl" /></Pressable>
+          </HStack>
+        ) : (
+          <HStack space="md" alignItems="center">
+            <Heading color="$white" size="xl">{school.name}</Heading>
+            <Pressable onPress={() => setIsEditing(true)}><Icon as={EditIcon} color="$primary500" /></Pressable>
+          </HStack>
+        )}
+        <Text color="$textDark400">{school.address}</Text>
 
-        <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <HStack justifyContent="space-between" alignItems="center" mt="$4">
           <Heading color="$white" size="md">Turmas</Heading>
-          <Button size="sm" onPress={() => router.push({ pathname: '/classes/manage', params: { schoolId: id } })} style={{ backgroundColor: '#0077e6' }}>
-            <Icon as={AddIcon} color="$white" mr="$1" />
+          <Button size="sm" onPress={() => router.push({ pathname: '/classes/manage', params: { schoolId: id } })}>
+            <Icon as={AddIcon} color="$white" mr="$2" />
             <ButtonText>Nova Turma</ButtonText>
           </Button>
         </HStack>
 
+        {/* Listagem de Turmas com Turno e Ano */}
         <FlatList
           data={schoolClasses}
+          keyExtractor={(item: any) => item.id}
           renderItem={({ item }: any) => (
-            <HStack style={{ padding: 16, backgroundColor: '#171717', borderRadius: 8, marginBottom: 8, justifyContent: 'space-between' }}>
+            <HStack style={{ padding: 16, backgroundColor: '#171717', borderRadius: 12, marginBottom: 10, justifyContent: 'space-between', alignItems: 'center' }}>
               <VStack>
-                <Text color="$white" bold>{item.name}</Text>
-                <Text color="$textDark400" size="sm">{item.shift} • {item.year}</Text>
+                <Text color="$white" fontWeight="$bold">{item.name}</Text>
+                <HStack space="xs" alignItems="center">
+                  <Box px="$2" py="$0.5" rounded="$sm" bg="$primary800">
+                    <Text color="$white" size="xs" bold style={{ textTransform: 'uppercase' }}>
+                      {item.shift}
+                    </Text>
+                  </Box>
+                  <Text color="$textDark400" size="xs"> • {item.year}</Text>
+                </HStack>
               </VStack>
-              <Pressable onPress={() => deleteClass(item.id)}><Icon as={TrashIcon} color="$textDark500" /></Pressable>
+              <Pressable onPress={() => deleteClass(item.id)}>
+                <Icon as={TrashIcon} color="$textDark500" />
+              </Pressable>
             </HStack>
           )}
         />

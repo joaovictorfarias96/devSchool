@@ -14,17 +14,28 @@ interface SchoolState {
 }
 
 export const useSchoolStore = create<SchoolState>((set) => ({
-  schools: [{ id: '1', name: 'Escola Modelo', address: 'Rua Principal, 10' }],
-  classes: [{ id: 'c1', schoolId: '1', name: '1º Ano A', shift: 'Matutino', year: 2026 }],
+  // Arrays limpos para produção
+  schools: [],
+  classes: [],
 
-  addSchool: (school) => set((state) => ({ schools: [...state.schools, school] })),
+  addSchool: (school) => set((state) => ({ 
+    schools: [...state.schools, school] 
+  })),
+  
   updateSchool: (id, updated) => set((state) => ({
     schools: state.schools.map((s) => s.id === id ? { ...s, ...updated } : s)
   })),
+  
   deleteSchool: (id) => set((state) => ({
     schools: state.schools.filter((s) => s.id !== id),
     classes: state.classes.filter((c) => c.schoolId !== id)
   })),
-  addClass: (newClass) => set((state) => ({ classes: [...state.classes, newClass] })),
-  deleteClass: (id) => set((state) => ({ classes: state.classes.filter((c) => c.id !== id) })),
+  
+  addClass: (newClass) => set((state) => ({ 
+    classes: [...state.classes, newClass] 
+  })),
+  
+  deleteClass: (id) => set((state) => ({ 
+    classes: state.classes.filter((c) => c.id !== id) 
+  })),
 }));
